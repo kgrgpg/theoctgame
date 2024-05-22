@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { from } from 'rxjs';
 
 const playerSchema = new mongoose.Schema({
   playerAddress: { type: String, required: true },
@@ -6,4 +7,9 @@ const playerSchema = new mongoose.Schema({
   transactionHash: { type: String, required: true }
 });
 
-export const Player = mongoose.model('Player', playerSchema);
+const PlayerModel = mongoose.model('Player', playerSchema);
+
+export const Player = {
+  create: (data: any) => from(new PlayerModel(data).save()),
+  findAll: () => from(PlayerModel.find().exec())
+};
