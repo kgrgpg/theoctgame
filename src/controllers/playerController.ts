@@ -18,7 +18,12 @@ export const createPlayer = (req: Request, res: Response) => {
   const { playerAddress, score } = req.body;
   addPlayerService(playerAddress, score).pipe(
     tap(() => {
-      kafkaProducerStream.next({ playerAddress, score });
+      const message = {
+        topic: 'player-updates',
+        key: playerAddress,
+        value: JSON.stringify({ playerAddress, score })
+      };
+      kafkaProducerStream.next(message);
     }),
     switchMap(tx => of(res.status(201).json({ transactionHash: tx.transactionHash }))),
     catchError(err => {

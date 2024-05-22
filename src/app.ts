@@ -16,11 +16,16 @@ app.use('/api', playerRoutes);
 
 app.use(errorHandler);
 
-mongoose.connect(process.env.MONGO_URL!, { useNewUrlParser: true, useUnifiedTopology: true })
+const PORT = process.env.PORT || 3000;
+
+mongoose.connect(process.env.MONGO_URL!, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+} as mongoose.ConnectOptions)
   .then(() => {
     console.log('Connected to MongoDB');
-    app.listen(3000, () => {
-      console.log('Server running on port 3000');
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
   })
   .catch(err => {
