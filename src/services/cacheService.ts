@@ -1,13 +1,26 @@
+import '../config';
+
 import { createClient } from 'redis';
 import { from, Observable } from 'rxjs';
 import { promisify } from 'util';
 
+console.log("Resolving REDIS_HOST to: " + process.env.REDIS_HOST);
 const client = createClient({
-  url: `redis://${process.env.REDIS_HOST}`
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: 6379
+  }
 });
 
 client.on('error', (err) => {
   console.error('Redis error:', err);
+});
+
+// Ensure the client is connected before using it
+client.connect().then(() => {
+  console.log('Connected to Redis');
+}).catch((err) => {
+  console.error('Redis connection error:', err);
 });
 
 const getAsync = promisify(client.get).bind(client) as (key: string) => Promise<string | null>;

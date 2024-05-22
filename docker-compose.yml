@@ -1,45 +1,66 @@
-version: '3.7'
-
+version: '3.8'
 services:
-  app:
-    build: .
+  mongo:
+    image: mongo:latest
+    container_name: mongo
     ports:
-      - "3000:3000"
+      - "27017:27017"
     environment:
-      - NODE_ENV=development
-      - RINKEBY_URL=${RINKEBY_URL}
-      - PRIVATE_KEY=${PRIVATE_KEY}
-      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
-      - KAFKA_HOST=kafka:9092
-      - REDIS_HOST=redis
-      - MONGO_URL=mongodb://mongo:27017/leaderboard
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - kafka
-      - redis
-      - mongo
-
-  kafka:
-    image: wurstmeister/kafka:latest
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    depends_on:
-      - zookeeper
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
 
   zookeeper:
     image: wurstmeister/zookeeper:latest
+    container_name: zookeeper
     ports:
       - "2181:2181"
 
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - ./create-topics.sh:/tmp/create-topics.sh
+    entrypoint: sh -c "start-kafka.sh & sleep 10 && /tmp/create-topics.sh && tail -f /dev/null"
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'ruok' | nc localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
   redis:
-    image: redis:alpine
+    image: redis:latest
+    container_name: redis
     ports:
       - "6379:6379"
 
-  mongo:
-    image: mongo
+  app:
+    build: .
+    container_name: theoctgame_app
     ports:
-      - "27017:27017"
+      - "3000:3000"
+    environment:
+      REDIS_HOST: redis
+      MONGO_URL: mongodb://root:example@mongo:27017
+      KAFKA_BROKER: kafka:9092
+      RINKEBY_URL: http://127.0.0.1:8545
+      PRIVATE_KEY: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+      CONTRACT_ADDRESS: 0x34A1D3fff3958843C43aD80F30b94c510645C316
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+      zookeeper:
+        condition: service_started
+      redis:
+        condition: service_started
+
+networks:
+  default:
+    driver: bridge
