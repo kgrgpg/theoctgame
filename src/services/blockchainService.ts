@@ -1,3 +1,5 @@
+import '../config';
+
 import { ethers } from 'ethers';
 import { from, of, Observable } from 'rxjs';
 import { Player } from '../models/playerModel';
@@ -8,6 +10,7 @@ import { getCachedData, setCachedData } from '../services/cacheService';
 const { JsonRpcProvider, Wallet, Contract } = ethers;
 
 const provider = new JsonRpcProvider(process.env.RINKEBY_URL);
+
 const wallet = new Wallet(process.env.PRIVATE_KEY!, provider);
 const contractAddress = process.env.CONTRACT_ADDRESS!;
 const abi = [

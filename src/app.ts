@@ -1,11 +1,10 @@
+import './config';
+
 import express from 'express';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
 import { playerRoutes } from './routes/playerRoutes';
 import { errorHandler } from './middleware/errorMiddleware';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const app = express();
 
